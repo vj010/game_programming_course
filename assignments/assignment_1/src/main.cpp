@@ -241,9 +241,9 @@ public:
 int main()
 {
     std::shared_ptr<GameProperties> gameProps = GameProperties::loadPropertiesFromConfigFile("config.txt");
-    // gameProps->textProps->printProperties();
-    // gameProps->windowProps->printProperties();
-    sf::RenderWindow window(sf::VideoMode(500, 500), "Sfml test");
+    int wWidth = gameProps->windowProps->width;
+    int wHeight = gameProps->windowProps->height;
+    sf::RenderWindow window(sf::VideoMode(wWidth, wHeight), "Sfml test");
     while (window.isOpen())
     {
         sf::Event event;
@@ -255,10 +255,34 @@ int main()
             }
         }
 
-        window.clear();
+        std::vector<std::shared_ptr<sf::Shape>> shapes;
+
+        for (std::shared_ptr<CircleProperties> circleProp : gameProps->circleProps)
+        {
+            std::cout << "pushing a circle" << std::endl;
+            std::shared_ptr<sf::Shape> circle = std::make_shared<sf::CircleShape>(circleProp->radius);
+            circle->setFillColor(sf::Color(circleProp->colorR, circleProp->colorG, circleProp->colorB));
+            circle->setPosition(sf::Vector2f(circleProp->posX, circleProp->posY));
+            shapes.push_back(circle);
+        }
+
+        for (std::shared_ptr<RectangleProperties> rectangleProp : gameProps->rectangleProps)
+        {
+            std::cout << "pushing a rectangle" << std::endl;
+            std::shared_ptr<sf::Shape> rectangle = std::make_shared<sf::RectangleShape>(sf::Vector2f(rectangleProp->width, rectangleProp->height));
+            rectangle->setFillColor(sf::Color(rectangleProp->colorR, rectangleProp->colorG, rectangleProp->colorB));
+            rectangle->setPosition(sf::Vector2f(rectangleProp->posX, rectangleProp->posY));
+            shapes.push_back(rectangle);
+        }
+
+        window.clear(sf::Color::Black);
+
+        for (auto shape : shapes)
+        {
+            window.draw(*shape);
+        }
 
         window.display();
     }
-
     return 0;
 }
