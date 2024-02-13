@@ -238,12 +238,87 @@ public:
     }
 };
 
+class MovingShape
+{
+public:
+    std::shared_ptr<sf::Shape> shape;
+    float speedX = 0.0f;
+    float speedY = 0.0f;
+    std::string name = "";
+
+    MovingShape(std::shared_ptr<sf::Shape> sfmlShape, float movingSpeedX, float movingSpeedY, std::string shapeName)
+        : shape(sfmlShape), speedX(movingSpeedX), speedY(movingSpeedY), name(shapeName)
+    {
+    }
+
+    bool detectColisionWithBoundaryX(float minPosX, float maxPosX)
+    {
+        auto bounds = shape->getLocalBounds();
+        auto currentPos = shape->getPosition();
+        if (currentPos.x <= minPosX || currentPos.x + bounds.width >= maxPosX)
+            return true;
+
+        return false;
+    }
+
+    bool detectColisionWithBoundaryY(float minPosY, float maxPosY)
+    {
+        auto bounds = shape->getLocalBounds();
+        auto currentPos = shape->getPosition();
+        if (currentPos.y <= minPosY || currentPos.y + bounds.height >= maxPosY)
+            return true;
+
+        return false;
+    }
+
+    void reverseSpeedX()
+    {
+        speedX = -1 * speedX;
+    }
+
+    void reverseSpeedY()
+    {
+        speedY = -1 * speedY;
+    }
+
+    void moveShape()
+    {
+        auto currentPos = shape->getPosition();
+        shape->move(speedX, speedY);
+    }
+};
+
 int main()
 {
     std::shared_ptr<GameProperties> gameProps = GameProperties::loadPropertiesFromConfigFile("config.txt");
     int wWidth = gameProps->windowProps->width;
     int wHeight = gameProps->windowProps->height;
     sf::RenderWindow window(sf::VideoMode(wWidth, wHeight), "Sfml test");
+    window.setFramerateLimit(100);
+
+    std::vector<std::shared_ptr<MovingShape>> movingShapes;
+    for (std::shared_ptr<CircleProperties> circleProp : gameProps->circleProps)
+    {
+        std::cout << "pushing a circle" << std::endl;
+        std::shared_ptr<sf::Shape> circle = std::make_shared<sf::CircleShape>(circleProp->radius);
+        circle->setFillColor(sf::Color(circleProp->colorR, circleProp->colorG, circleProp->colorB));
+        circle->setPosition(sf::Vector2f(circleProp->posX, circleProp->posY));
+
+        std::shared_ptr<MovingShape> movingCircle = std::make_shared<MovingShape>(circle, circleProp->speedX, circleProp->speedY, circleProp->name);
+        movingShapes.push_back(movingCircle);
+    }
+
+    for (std::shared_ptr<RectangleProperties> rectangleProp : gameProps->rectangleProps)
+    {
+        std::cout << "pushing a rectangle" << std::endl;
+        std::shared_ptr<sf::Shape> rectangle = std::make_shared<sf::RectangleShape>(sf::Vector2f(rectangleProp->width, rectangleProp->height));
+        rectangle->setFillColor(sf::Color(rectangleProp->colorR, rectangleProp->colorG, rectangleProp->colorB));
+        rectangle->setPosition(sf::Vector2f(rectangleProp->posX, rectangleProp->posY));
+
+        std::shared_ptr<MovingShape> movingRectangle = std::make_shared<MovingShape>(rectangle, rectangleProp->speedX, rectangleProp->speedY, rectangleProp->name);
+        movingShapes.push_back(movingRectangle);
+    }
+
     while (window.isOpen())
     {
         sf::Event event;
@@ -254,32 +329,26 @@ int main()
                 window.close();
             }
         }
-
-        std::vector<std::shared_ptr<sf::Shape>> shapes;
-
-        for (std::shared_ptr<CircleProperties> circleProp : gameProps->circleProps)
+        for (auto movingShape : movingShapes)
         {
-            std::cout << "pushing a circle" << std::endl;
-            std::shared_ptr<sf::Shape> circle = std::make_shared<sf::CircleShape>(circleProp->radius);
-            circle->setFillColor(sf::Color(circleProp->colorR, circleProp->colorG, circleProp->colorB));
-            circle->setPosition(sf::Vector2f(circleProp->posX, circleProp->posY));
-            shapes.push_back(circle);
-        }
+            if (movingShape->detectColisionWithBoundaryX(0, gameProps->windowProps->width))
+            {
+                movingShape->reverseSpeedX();
+            }
 
-        for (std::shared_ptr<RectangleProperties> rectangleProp : gameProps->rectangleProps)
-        {
-            std::cout << "pushing a rectangle" << std::endl;
-            std::shared_ptr<sf::Shape> rectangle = std::make_shared<sf::RectangleShape>(sf::Vector2f(rectangleProp->width, rectangleProp->height));
-            rectangle->setFillColor(sf::Color(rectangleProp->colorR, rectangleProp->colorG, rectangleProp->colorB));
-            rectangle->setPosition(sf::Vector2f(rectangleProp->posX, rectangleProp->posY));
-            shapes.push_back(rectangle);
+            if (movingShape->detectColisionWithBoundaryY(0, gameProps->windowProps->height))
+            {
+                movingShape->reverseSpeedY();
+            }
+
+            movingShape->moveShape();
         }
 
         window.clear(sf::Color::Black);
 
-        for (auto shape : shapes)
+        for (auto movingShape : movingShapes)
         {
-            window.draw(*shape);
+            window.draw(*(movingShape->shape));
         }
 
         window.display();
