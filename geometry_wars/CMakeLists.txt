@@ -9,10 +9,14 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Specify the source files for the executable
 file(GLOB SOURCE_FILES "src/*.cpp")
-add_executable(MyExecutable ${SOURCE_FILES})
+add_executable(geometry_wars ${SOURCE_FILES})
 
 # Specify the directory containing header files
 include_directories(include)
+include_directories(libs/imgui)
+
+#add subdirectories with their own CMakeLists.txt files
+add_subdirectory(libs/imgui)
 
 # -------------------- Static Library --------------------
 # Create a static library named "my_static_lib"
@@ -45,25 +49,27 @@ find_library(SFML_AUDIO_LIB sfml-audio)
 find_library(SFML_SYSTEM_LIB sfml-system)
 
 if(SFML_GRAPHICS_LIB)
-    target_link_libraries(MyExecutable PRIVATE ${MATH_LIB})
+    target_link_libraries(geometry_wars PRIVATE ${SFML_GRAPHICS_LIB})
 else()
     message(FATAL_ERROR "sfml-graphics library not found.")
 endif()
 
 if(SFML_WINDOW_LIB)
-    target_link_libraries(MyExecutable PRIVATE ${MATH_LIB})
+    target_link_libraries(geometry_wars PRIVATE ${SFML_WINDOW_LIB})
 else()
     message(FATAL_ERROR "sfml-window library not found.")
 endif()
 
 if(SFML_AUDIO_LIB)
-    target_link_libraries(MyExecutable PRIVATE ${MATH_LIB})
+    target_link_libraries(geometry_wars PRIVATE ${SFML_AUDIO_LIB})
 else()
     message(FATAL_ERROR "sfml-audio library not found.")
 endif()
 
 if(SFML_SYSTEM_LIB)
-    target_link_libraries(MyExecutable PRIVATE ${MATH_LIB})
+    target_link_libraries(geometry_wars PRIVATE ${SFML_SYSTEM_LIB})
 else()
     message(FATAL_ERROR "sfml-system library not found.")
 endif()
+
+target_link_libraries(geometry_wars PUBLIC imgui)
