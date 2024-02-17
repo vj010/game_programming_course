@@ -8,7 +8,8 @@ project(MyProject)
 set(CMAKE_CXX_STANDARD 17)
 
 # Specify the source files for the executable
-add_executable(MyExecutable src/game.cpp)
+file(GLOB SOURCE_FILES "src/*.cpp")
+add_executable(MyExecutable ${SOURCE_FILES})
 
 # Specify the directory containing header files
 include_directories(include)
