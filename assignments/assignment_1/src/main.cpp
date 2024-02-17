@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 #include <filesystem>
+#include <math.h>
 class WindowProps
 {
 public:
@@ -203,6 +204,7 @@ public:
         else
         {
             std::cout << "file stream is close" << std::endl;
+            return nullptr;
         }
 
         while (fin >> propName)
@@ -244,11 +246,18 @@ public:
     std::shared_ptr<sf::Shape> shape;
     float speedX = 0.0f;
     float speedY = 0.0f;
-    std::string name = "";
+    std::shared_ptr<sf::Text> text;
 
-    MovingShape(std::shared_ptr<sf::Shape> sfmlShape, float movingSpeedX, float movingSpeedY, std::string shapeName)
-        : shape(sfmlShape), speedX(movingSpeedX), speedY(movingSpeedY), name(shapeName)
+    MovingShape(std::shared_ptr<sf::Shape> sfmlShape, float movingSpeedX, float movingSpeedY, std::shared_ptr<sf::Text> shapeText)
+        : shape(sfmlShape), speedX(movingSpeedX), speedY(movingSpeedY), text(shapeText)
     {
+        auto shapeBounds = shape->getLocalBounds();
+        auto shapePos = shape->getPosition();
+        auto textBounds = text->getLocalBounds();
+        float textPosY = shapePos.y + (shapeBounds.height) / 2 - 0.55 * text->getCharacterSize();
+        float textPosX = shapePos.x + (shapeBounds.width) / 2 - 0.55 * textBounds.width;
+        std::cout << "textHeight:" << textPosY << " textWidth:" << textPosX << std::endl;
+        text->setPosition(sf::Vector2f(textPosX, textPosY));
     }
 
     bool detectColisionWithBoundaryX(float minPosX, float maxPosX)
@@ -285,16 +294,29 @@ public:
     {
         auto currentPos = shape->getPosition();
         shape->move(speedX, speedY);
+        text->move(speedX, speedY);
     }
 };
 
 int main()
 {
     std::shared_ptr<GameProperties> gameProps = GameProperties::loadPropertiesFromConfigFile("config.txt");
+    if (gameProps == nullptr)
+    {
+        std::cerr << "could not load game config. The config file may be corrupted" << std::endl;
+        exit(-1);
+    }
+    sf::Font font;
+    if (!font.loadFromFile(gameProps->textProps->fileName))
+    {
+        std::cerr << "could not load game fonts" << std::endl;
+        exit(-1);
+    }
+
     int wWidth = gameProps->windowProps->width;
     int wHeight = gameProps->windowProps->height;
     sf::RenderWindow window(sf::VideoMode(wWidth, wHeight), "Sfml test");
-    window.setFramerateLimit(100);
+    window.setFramerateLimit(60);
 
     std::vector<std::shared_ptr<MovingShape>> movingShapes;
     for (std::shared_ptr<CircleProperties> circleProp : gameProps->circleProps)
@@ -304,7 +326,14 @@ int main()
         circle->setFillColor(sf::Color(circleProp->colorR, circleProp->colorG, circleProp->colorB));
         circle->setPosition(sf::Vector2f(circleProp->posX, circleProp->posY));
 
-        std::shared_ptr<MovingShape> movingCircle = std::make_shared<MovingShape>(circle, circleProp->speedX, circleProp->speedY, circleProp->name);
+        std::shared_ptr<sf::Text> shapeText = std::make_shared<sf::Text>();
+        shapeText->setCharacterSize(gameProps->textProps->size);
+        shapeText->setString(circleProp->name);
+        shapeText->setFillColor(sf::Color(gameProps->textProps->colorR, gameProps->textProps->colorG, gameProps->textProps->colorB));
+        shapeText->setFont(font);
+
+        std::shared_ptr<MovingShape>
+            movingCircle = std::make_shared<MovingShape>(circle, circleProp->speedX, circleProp->speedY, shapeText);
         movingShapes.push_back(movingCircle);
     }
 
@@ -315,7 +344,13 @@ int main()
         rectangle->setFillColor(sf::Color(rectangleProp->colorR, rectangleProp->colorG, rectangleProp->colorB));
         rectangle->setPosition(sf::Vector2f(rectangleProp->posX, rectangleProp->posY));
 
-        std::shared_ptr<MovingShape> movingRectangle = std::make_shared<MovingShape>(rectangle, rectangleProp->speedX, rectangleProp->speedY, rectangleProp->name);
+        std::shared_ptr<sf::Text> shapeText = std::make_shared<sf::Text>();
+        shapeText->setCharacterSize(gameProps->textProps->size);
+        shapeText->setString(rectangleProp->name);
+        shapeText->setFillColor(sf::Color(gameProps->textProps->colorR, gameProps->textProps->colorG, gameProps->textProps->colorB));
+        shapeText->setFont(font);
+
+        std::shared_ptr<MovingShape> movingRectangle = std::make_shared<MovingShape>(rectangle, rectangleProp->speedX, rectangleProp->speedY, shapeText);
         movingShapes.push_back(movingRectangle);
     }
 
@@ -349,6 +384,7 @@ int main()
         for (auto movingShape : movingShapes)
         {
             window.draw(*(movingShape->shape));
+            window.draw(*(movingShape->text));
         }
 
         window.display();
