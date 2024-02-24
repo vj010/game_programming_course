@@ -1,18 +1,60 @@
 #include <game.h>
 #include <fstream>
 #include <SFML/Graphics.hpp>
+#include <entities.h>
 
 void Game::sMovement() {}
+void Game::sUserInput() {}
 // void Game::sCollision() {}
-// void Game::sUserInput() {}
-// void Game::sRender() {}
-// void Game::sEnemySpawner() {}
+void Game::sRender()
+{
+    m_window.clear(sf::Color::Black);
 
+    std::vector<std::shared_ptr<sf::RectangleShape>> backgroundTiles;
+    generateWindowBackgroundUnits(backgroundTiles);
+
+    std::cout << "background prepared" << std::endl;
+    for (auto backgroundTile : backgroundTiles)
+    {
+        m_window.draw(*backgroundTile);
+    }
+
+    m_window.display();
+}
+// void Game::sEnemySpawner() {}
+void Game ::generateWindowBackgroundUnits(std::vector<std::shared_ptr<sf::RectangleShape>> &backgroundTiles) const
+{
+    bool parity = false;
+    float tileWidth = 10;
+    float tileHeight = 10;
+
+    for (size_t i = 0; i < windowConfig.width - tileWidth; i += tileWidth)
+    {
+        for (size_t j = 0; j < windowConfig.height - tileHeight; j += tileHeight)
+        {
+            std::shared_ptr<sf::RectangleShape> backgroundBlock = std::make_shared<sf::RectangleShape>(sf::Vector2f(tileWidth, tileHeight));
+            backgroundBlock->setPosition(sf::Vector2f(i, j));
+            if (parity)
+            {
+                parity = false;
+                backgroundBlock->setFillColor(sf::Color(54, 65, 50));
+            }
+            else
+            {
+                parity = true;
+                backgroundBlock->setFillColor(sf::Color(54, 69, 79));
+            }
+            backgroundTiles.push_back(backgroundBlock);
+        }
+    }
+}
 void Game::run()
 {
-    std::cout << "hello world" << std::endl;
-    m_window.create(sf::VideoMode(windowConfig.width, windowConfig.height), "Geometry Wars", sf::Style::Fullscreen);
+    std::cout << "window dimensions:" << windowConfig.width << windowConfig.height << std::endl;
+    m_window.create(sf::VideoMode(windowConfig.width, windowConfig.height), "Geometry Wars", sf::Style::Default);
     m_window.setFramerateLimit(windowConfig.framesPerSecond);
+    std::cout << "Created window" << std::endl;
+
     while (m_window.isOpen())
     {
         sf::Event event;
@@ -23,6 +65,8 @@ void Game::run()
                 m_window.close();
             }
         }
+
+        sRender();
     }
 
     std::cin.get();

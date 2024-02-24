@@ -7,6 +7,7 @@
 #include <fstream>
 #include "imgui.h"
 #include "imgui-SFML.h"
+#include "entities.h"
 
 struct WindowConfig
 {
@@ -81,9 +82,9 @@ class Game
     BulletConfig bulletConfig;
 
     void sMovement();
+    void sUserInput();
     // void sCollision();
-    // void sUserInput();
-    // void sRender();
+    void sRender();
     // void sEnemySpawner();
 
     int propNameToCode(const std::string &propName);
@@ -92,6 +93,9 @@ class Game
     PlayerConfig readPlayerProps(std::ifstream &fin);
     EnemyConfig readEnemyProps(std::ifstream &fin);
     BulletConfig readBulletProps(std::ifstream &fin);
+    void generateWindowBackgroundUnits(std::vector<std::shared_ptr<sf::RectangleShape>> &backgroundTiles) const;
+
+    // Entities player;
 
 public:
     void run();
