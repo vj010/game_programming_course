@@ -1,7 +1,8 @@
 #include <game.h>
 #include <fstream>
 #include <SFML/Graphics.hpp>
-#include <entities.h>
+#include "entities.h"
+#include "entity_manager.h"
 
 void Game::sMovement() {}
 void Game::sUserInput() {}
@@ -13,11 +14,16 @@ void Game::sRender()
     std::vector<std::shared_ptr<sf::RectangleShape>> backgroundTiles;
     generateWindowBackgroundUnits(backgroundTiles);
 
-    std::cout << "background prepared" << std::endl;
     for (auto backgroundTile : backgroundTiles)
     {
         m_window.draw(*backgroundTile);
     }
+
+    for (auto entity : entityManager.entityList)
+    {
+        m_window.draw(*(entity->circleShape));
+    }
+    std::cout << "drawing shapes" << std::endl;
 
     m_window.display();
 }
@@ -50,10 +56,15 @@ void Game ::generateWindowBackgroundUnits(std::vector<std::shared_ptr<sf::Rectan
 }
 void Game::run()
 {
-    std::cout << "window dimensions:" << windowConfig.width << windowConfig.height << std::endl;
     m_window.create(sf::VideoMode(windowConfig.width, windowConfig.height), "Geometry Wars", sf::Style::Default);
     m_window.setFramerateLimit(windowConfig.framesPerSecond);
-    std::cout << "Created window" << std::endl;
+
+    std::shared_ptr<Entities> player = entityManager.createEntity("player");
+    std::shared_ptr<sf::CircleShape> playerShape = std::make_shared<sf::CircleShape>(playerConfig.shapeRadius, playerConfig.shapeVertices);
+    playerShape->setFillColor(sf::Color(playerConfig.fillColorR, playerConfig.fillColorG, playerConfig.fillColorB));
+    playerShape->setPosition(windowConfig.width / 2 - playerConfig.shapeRadius, windowConfig.height / 2 - playerConfig.shapeRadius);
+    playerShape->setOutlineColor(sf::Color(playerConfig.outlineColorR, playerConfig.outlineColorG, playerConfig.outlineColorB));
+    player->circleShape = playerShape;
 
     while (m_window.isOpen())
     {

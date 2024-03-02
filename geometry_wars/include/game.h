@@ -7,7 +7,8 @@
 #include <fstream>
 #include "imgui.h"
 #include "imgui-SFML.h"
-#include "entities.h"
+
+#include "entity_manager.h"
 
 struct WindowConfig
 {
@@ -95,7 +96,7 @@ class Game
     BulletConfig readBulletProps(std::ifstream &fin);
     void generateWindowBackgroundUnits(std::vector<std::shared_ptr<sf::RectangleShape>> &backgroundTiles) const;
 
-    // Entities player;
+    EntityManager entityManager;
 
 public:
     void run();
